@@ -1,39 +1,36 @@
 const express = require("express");
-const fs = require("fs");
-const path = require("path");
 
 const app = express();
 const PORT = 3000;
 
-// Middleware to log user visits
-app.use((req, res, next) => {
-    const logEntry = `${new Date().toISOString()} - ${req.ip}\n`;
-    fs.appendFile("visits.log", logEntry, (err) => {
-        if (err) console.error("Error logging visit:", err);
-    });
-    next();
+// Sample product data
+const products = [
+    { id: 1, name: "Laptop", category: "electronics", price: 50000 },
+    { id: 2, name: "Smartphone", category: "electronics", price: 30000 },
+    { id: 3, name: "Table", category: "furniture", price: 7000 },
+    { id: 4, name: "Sofa", category: "furniture", price: 25000 },
+    { id: 5, name: "Headphones", category: "electronics", price: 2000 }
+];
+
+// GET /products - Return all products
+app.get("/products", (req, res) => {
+    if (req.query.category) {
+        const filteredProducts = products.filter(p => p.category === req.query.category);
+        return res.json(filteredProducts);
+    }
+    res.json(products);
 });
 
-// Serve static files from the "public" folder
-app.use(express.static(path.join(__dirname, "public")));
-
-// API Endpoint to retrieve logs
-app.get("/logs", (req, res) => {
-    fs.readFile("visits.log", "utf8", (err, data) => {
-        if (err) {
-            return res.status(500).json({ message: "Error reading log file" });
-        }
-        const logs = data.split("\n").filter(line => line).map(line => {
-            const [time, ip] = line.split(" - ");
-            return { time, ip };
-        });
-        res.json(logs);
-    });
+// GET /products/:id - Fetch a specific product by ID
+app.get("/products/:id", (req, res) => {
+    const product = products.find(p => p.id === parseInt(req.params.id));
+    if (!product) {
+        return res.status(404).json({ message: "Product not found" });
+    }
+    res.json(product);
 });
 
 // Start the server
 app.listen(PORT, () => {
     console.log(`Server running at http://localhost:${PORT}`);
 });
-
-
